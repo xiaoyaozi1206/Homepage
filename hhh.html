@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>演出排队抢号小程序 · 交互原型</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2307c160'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white'>票</text></svg>">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+    background: #e8e8ec;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px 0;
+  }
+
+  /* ===== 手机外壳 ===== */
+  .phone-frame {
+    width: 375px;
+    height: 812px;
+    background: #f7f7f7;
+    border-radius: 40px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    overflow: hidden;
+    position: relative;
+    border: 10px solid #1a1a1a;
+    flex-shrink: 0;
+  }
+  /* 状态栏 */
+  .status-bar {
+    height: 44px;
+    background: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #000;
+    position: relative;
+    z-index: 10;
+  }
+  .status-bar .notch {
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 150px; height: 28px;
+    background: #1a1a1a;
+    border-radius: 0 0 18px 18px;
+  }
+  /* 小程序导航栏 */
+  .nav-bar {
+    height: 44px;
+    background: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 17px;
+    font-weight: 600;
+    border-bottom: 1px solid #eee;
+    position: relative;
+  }
+  .nav-bar .back {
+    position: absolute;
+    left: 16px;
+    font-size: 22px;
+    color: #333;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .nav-bar .capsule {
+    position: absolute;
+    right: 12px;
+    width: 80px; height: 30px;
+    border: 1px solid rgba(0,0,0,.1);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+  }
+  .nav-bar .capsule::before {
+    content:'';
+    width: 1px; height: 18px;
+    background: rgba(0,0,0,.1);
+    position: absolute;
+    left: 50%;
+  }
+
+  /* 内容区 */
+  .content {
+    height: calc(812px - 44px - 44px - 60px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    background: #f7f7f7;
+  }
+  .content::-webkit-scrollbar { display:none; }
+
+  /* 底部 tab */
+  .tab-bar {
+    height: 60px;
+    background: #fff;
+    border-top: 1px solid #eee;
+    display: flex;
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 10;
+  }
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-size: 10px;
+    color: #999;
+    cursor: pointer;
+  }
+  .tab-item.active { color: #07c160; }
+  .tab-item .icon { font-size: 22px; line-height: 1; }
+
+  /* ===== 视图通用 ===== */
+  .view { display: none; min-height: 100%; }
+  .view.active { display: block; }
+
+  /* ===== 登录页 ===== */
+  .login-view {
+    background: linear-gradient(180deg, #07c160 0%, #06ad56 40%, #f7f7f7 100%);
+    padding: 60px 30px 30px;
+    text-align: center;
+  }
+  .logo-circle {
+    width: 90px; height: 90px;
+    background: rgba(255,255,255,.25);
+    border-radius: 24px;
+    margin: 0 auto 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 44px;
+    backdrop-filter: blur(10px);
+  }
+  .login-view h1 {
+    color: #fff;
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+  .login-view .sub {
+    color: rgba(255,255,255,.85);
+    font-size: 13px;
+    margin-bottom: 40px;
+  }
+  .login-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.08);
+    text-align: left;
+  }
+  .login-card h2 {
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+  .login-card .tip {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 20px;
+  }
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 6px;
+  }
+  .form-group input {
+    width: 100%;
+    height: 44px;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 16px;
+    outline: none;
+    background: #fafafa;
+  }
+  .form-group input:focus {
+    border-color: #07c160;
+    background: #fff;
+  }
+  .btn-primary {
+    width: 100%;
+    height: 46px;
+    background: #07c160;
+    color: #fff;
+    border: none;
+    border-radius: 23px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .btn-primary:active { background: #06ad56; }
+  .btn-ghost {
+    width: 100%;
+    height: 46px;
+    background: #fff;
+    color: #07c160;
+    border: 1.5px solid #07c160;
+    border-radius: 23px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  .agree-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 16px;
+    font-size: 11px;
+    color: #999;
+  }
+  .agree-row input[type=checkbox] { accent-color: #07c160; }
+
+  /* ===== 首页演出列表 ===== */
+  .banner {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #fff;
+    padding: 20px 16px;
+  }
+  .banner h2 { font-size: 18px; margin-bottom: 4px; }
+  .banner p { font-size: 12px; color: rgba(255,255,255,.7); }
+  .search-bar {
+    margin: 12px 16px;
+    background: #fff;
+    border-radius: 20px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 8px;
+    color: #999;
+    font-size: 13px;
+  }
+  .section-title {
+    padding: 16px 16px 10px;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .section-title .more { font-size: 12px; color: #999; font-weight: 400; }
+  .show-card {
+    background: #fff;
+    margin: 0 16px 12px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    cursor: pointer;
+  }
+  .show-cover {
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    color: #fff;
+    position: relative;
+  }
+  .show-cover.c1 { background: linear-gradient(135deg, #667eea, #764ba2); }
+  .show-cover.c2 { background: linear-gradient(135deg, #f093fb, #f5576c); }
+  .show-cover.c3 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+  .show-status-tag {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: rgba(0,0,0,.5);
+    color: #fff;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 10px;
+  }
+  .show-status-tag.soon { background: #ff9500; }
+  .show-status-tag.live { background: #ff3b30; }
+  .show-info { padding: 12px 14px; }
+  .show-info h3 { font-size: 15px; margin-bottom: 6px; }
+  .show-meta {
+    font-size: 12px;
+    color: #999;
+    line-height: 1.6;
+  }
+  .show-meta .row { display: flex; gap: 4px; }
+  .show-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #f0f0f0;
+  }
+  .show-footer .num { font-size: 12px; color: #666; }
+  .show-footer .num b { color: #ff3b30; font-size: 16px; }
+  .btn-small {
+    background: #07c160;
+    color: #fff;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 15px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-small:disabled { background: #ccc; }
+
+  /* ===== 演出详情 ===== */
+  .detail-cover {
+    height: 200px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 72px; color: #fff;
+  }
+  .detail-body { padding: 16px; }
+  .detail-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .detail-card h1 { font-size: 19px; margin-bottom: 8px; }
+  .detail-card .meta-line {
+    font-size: 13px; color: #666; line-height: 2;
+  }
+  .detail-card .meta-line b { color: #333; }
+  .queue-info-box {
+    background: #fff8e6;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 12px;
+  }
+  .queue-info-box .title {
+    font-size: 13px; font-weight: 600; color: #b8860b; margin-bottom: 6px;
+  }
+  .queue-info-box .desc { font-size: 12px; color: #8a6d3b; line-height: 1.6; }
+  .rule-list { font-size: 13px; color: #666; line-height: 2; }
+  .rule-list li { margin-left: 16px; }
+  .bottom-bar {
+    position: absolute;
+    bottom: 60px; left: 0; right: 0;
+    background: #fff;
+    padding: 10px 16px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+    z-index: 5;
+  }
+  .bottom-bar .btn-primary { margin-top: 0; flex: 1; }
+
+  /* ===== 抢号页 ===== */
+  .grab-hero {
+    background: linear-gradient(180deg, #1a1a2e, #16213e);
+    color: #fff;
+    padding: 30px 20px;
+    text-align: center;
+  }
+  .grab-hero .show-name { font-size: 18px; margin-bottom: 6px; }
+  .grab-hero .show-time { font-size: 13px; color: rgba(255,255,255,.6); }
+  .countdown-box {
+    margin: 24px auto;
+    text-align: center;
+  }
+  .countdown-box .label { font-size: 13px; color: rgba(255,255,255,.7); margin-bottom: 10px; }
+  .countdown-num {
+    display: inline-flex;
+    gap: 6px;
+  }
+  .countdown-num span {
+    background: rgba(255,255,255,.15);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 22px;
+    font-weight: 700;
+    min-width: 40px;
+  }
+  .ticket-input-card {
+    background: #fff;
+    margin: -20px 16px 16px;
+    border-radius: 14px;
+    padding: 20px 16px;
+    position: relative;
+    box-shadow: 0 4px 16px rgba(0,0,0,.08);
+  }
+  .ticket-input-card h3 { font-size: 15px; margin-bottom: 4px; }
+  .ticket-input-card .tip { font-size: 12px; color: #999; margin-bottom: 16px; }
+  .verify-result {
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-top: 12px;
+    display: none;
+  }
+  .verify-result.ok { background: #e8f8ee; color: #07c160; display: block; }
+  .verify-result.err { background: #ffeaea; color: #ff3b30; display: block; }
+
+  /* 抢号成功 */
+  .success-view {
+    text-align: center;
+    padding: 50px 24px;
+  }
+  .success-icon {
+    width: 80px; height: 80px;
+    background: #07c160;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 40px;
+  }
+  .success-view h2 { font-size: 20px; margin-bottom: 8px; }
+  .success-view .sub { font-size: 13px; color: #999; margin-bottom: 30px; }
+  .queue-number-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  }
+  .queue-number-card .label { font-size: 12px; color: #999; }
+  .queue-number-card .number {
+    font-size: 48px;
+    font-weight: 800;
+    color: #1a1a2e;
+    letter-spacing: 4px;
+    margin: 8px 0;
+  }
+  .queue-number-card .meta {
+    font-size: 13px; color: #666; line-height: 2;
+    border-top: 1px dashed #eee;
+    padding-top: 12px;
+    margin-top: 12px;
+    text-align: left;
+  }
+
+  /* ===== 我的排队页 ===== */
+  .my-queue-hero {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: #fff;
+    padding: 24px 20px;
+  }
+  .my-queue-hero .show-name { font-size: 16px; margin-bottom: 12px; opacity: .9; }
+  .progress-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .progress-row .cur {
+    font-size: 32px;
+    font-weight: 800;
+  }
+  .progress-row .cur small { font-size: 14px; font-weight: 400; opacity: .7; }
+  .progress-row .you {
+    text-align: right;
+  }
+  .progress-row .you .num { font-size: 28px; font-weight: 800; color: #ffd60a; }
+  .progress-row .you .label { font-size: 11px; opacity: .7; }
+  .progress-bar-wrap {
+    height: 6px;
+    background: rgba(255,255,255,.15);
+    border-radius: 3px;
+    margin: 14px 0 10px;
+    position: relative;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #07c160, #34d399);
+    border-radius: 3px;
+    width: 60%;
+  }
+  .progress-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    opacity: .8;
+  }
+  .waiting-card {
+    background: #fff;
+    margin: 16px;
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+  }
+  .waiting-card .qr-placeholder {
+    width: 160px; height: 160px;
+    margin: 16px auto;
+    background:
+      repeating-linear-gradient(0deg, #000 0 6px, transparent 6px 12px),
+      repeating-linear-gradient(90deg, #000 0 6px, #fff 6px 12px);
+    background-blend-mode: multiply;
+    border: 8px solid #fff;
+    box-shadow: 0 0 0 1px #eee;
+  }
+  .waiting-card .queue-label { font-size: 12px; color: #999; }
+  .waiting-card .queue-big {
+    font-size: 36px;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin: 4px 0;
+  }
+  .waiting-card .ticket-info {
+    font-size: 12px;
+    color: #999;
+    border-top: 1px dashed #eee;
+    padding-top: 12px;
+    margin-top: 12px;
+    line-height: 1.8;
+    text-align: left;
+  }
+  .notice-banner {
+    margin: 0 16px 16px;
+    background: #fff8e6;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: #8a6d3b;
+    line-height: 1.6;
+  }
+
+  /* ===== 个人中心 ===== */
+  .profile-header {
+    background: linear-gradient(135deg, #07c160, #06ad56);
+    color: #fff;
+    padding: 30px 20px 50px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .avatar {
+    width: 60px; height: 60px;
+    background: rgba(255,255,255,.3);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+  }
+  .profile-header .name { font-size: 18px; font-weight: 600; }
+  .profile-header .id { font-size: 12px; opacity: .8; margin-top: 4px; }
+  .menu-card {
+    background: #fff;
+    margin: -30px 16px 16px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,.05);
+  }
+  .menu-item {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .menu-item:last-child { border-bottom: none; }
+  .menu-item .icon { margin-right: 12px; font-size: 18px; }
+  .menu-item .arrow { margin-left: auto; color: #ccc; }
+
+  /* toast */
+  .toast {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,.75);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    z-index: 100;
+    display: none;
+    max-width: 260px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="notch"></div>
+    <span>●●●</span>
+  </div>
+  <div class="nav-bar" id="navBar">
+    <span class="back" id="backBtn" style="display:none" onclick="goBack()">‹</span>
+    <span id="navTitle">排队抢号</span>
+    <div class="capsule">••• ⊙</div>
+  </div>
+
+  <div class="content" id="contentArea">
+
+    <!-- ===== 视图：登录/微信授权 ===== -->
+    <div class="view active" id="view-login">
+      <div class="login-view">
+        <div class="logo-circle">🎫</div>
+        <h1>排队抢号</h1>
+        <p class="sub">线上抢号 · 不再通宵排队</p>
+        <div class="login-card">
+          <h2>欢迎使用</h2>
+          <p class="tip">使用微信账号一键登录，即可浏览演出</p>
+          <button class="btn-primary" onclick="doLogin()" style="margin-top:20px">
+            微信一键登录
+          </button>
+          <div class="agree-row">
+            <input type="checkbox" id="agreeCheck" checked>
+            <span>我已阅读并同意《用户协议》和《隐私政策》</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 视图：实名认证 ===== -->
+    <div class="view" id="view-verify">
+      <div class="login-view" style="background:linear-gradient(180deg,#07c160 0%,#06ad56 30%,#f7f7f7 100%)">
+        <div class="logo-circle" style="font-size:36px">🛡️</div>
+        <h1>实名认证</h1>
+        <p class="sub">抢号前需完成实名认证</p>
+        <div class="login-card">
+          <h2>填写实名信息</h2>
+          <p class="tip">信息仅用于入场核验，严格保密</p>
+          <div class="form-group">
+            <label>真实姓名</label>
+            <input type="text" id="realName" placeholder="请输入真实姓名">
+          </div>
+          <div class="form-group">
+            <label>身份证号</label>
+            <input type="text" id="idCard" placeholder="请输入身份证号">
+          </div>
+          <button class="btn-primary" onclick="doRealVerify()">提交认证</button>
+          <button class="btn-ghost" onclick="goBack()">暂不认证，返回</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 视图：首页演出列表 ===== -->
+    <div class="view" id="view-home">
+      <div class="banner">
+        <h2>🎭 精彩演出</h2>
+        <p>线上抢号，凭号入场，告别排队</p>
+      </div>
+      <div class="search-bar">🔍 搜索演出、场馆</div>
+      <div class="section-title">即将开始 <span class="more">全部 ›</span></div>
+
+      <div class="show-card" onclick="goDetail()">
+        <div class="show-cover c1">🎸<span class="show-status-tag live">抢号中</span></div>
+        <div class="show-info">
+          <h3>秋日摇滚音乐节</h3>
+          <div class="show-meta">
+            <div class="row">📍 深圳·湾汇艺术中心</div>
+            <div class="row">📅 2026-10-25 19:30</div>
+          </div>
+          <div class="show-footer">
+            <div class="num">剩余号源 <b>32</b>/200</div>
+            <button class="btn-small" onclick="event.stopPropagation(); goGrab()">去抢号</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="show-card" onclick="goDetail()">
+        <div class="show-cover c2">🎻<span class="show-status-tag soon">明日放号</span></div>
+        <div class="show-info">
+          <h3>城市交响音乐会</h3>
+          <div class="show-meta">
+            <div class="row">📍 广州·大剧院音乐厅</div>
+            <div class="row">📅 2026-11-02 20:00</div>
+          </div>
+          <div class="show-footer">
+            <div class="num">放号时间 10-20 20:00</div>
+            <button class="btn-small" disabled>预约提醒</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="show-card" onclick="goDetail()">
+        <div class="show-cover c3">🎤<span class="show-status-tag">已抢完</span></div>
+        <div class="show-info">
+          <h3>星空之夜演唱会</h3>
+          <div class="show-meta">
+            <div class="row">📍 东莞·篮球中心</div>
+            <div class="row">📅 2026-10-18 19:00</div>
+          </div>
+          <div class="show-footer">
+            <div class="num">号源已全部抢完</div>
+            <button class="btn-small" disabled>已抢完</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 视图：演出详情 ===== -->
+    <div class="view" id="view-detail">
+      <div class="detail-cover">🎸</div>
+      <div class="detail-body">
+        <div class="detail-card">
+          <h1>秋日摇滚音乐节</h1>
+          <div class="meta-line">
+            📍 <b>深圳·湾汇艺术中心</b><br>
+            📅 2026年10月25日 19:30<br>
+            👥 可抢号源：200 个
+          </div>
+          <div class="queue-info-box">
+            <div class="title">📌 抢号规则</div>
+            <div class="desc">
+              1. 实名认证用户即可参与抢号<br>
+              2. 一人一号，排队号不可转让<br>
+              3. 演出当天按号叫号入场
+            </div>
+          </div>
+        </div>
+        <div class="detail-card">
+          <h3 style="font-size:15px;margin-bottom:10px">入场须知</h3>
+          <ul class="rule-list">
+            <li>请提前 30 分钟到达场馆</li>
+            <li>凭排队号二维码 + 身份证核验入场</li>
+            <li>过号顺延 5 位，三次过号作废</li>
+          </ul>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <button class="btn-primary" onclick="goGrab()">立即抢号</button>
+      </div>
+    </div>
+
+    <!-- ===== 视图：抢号页 ===== -->
+    <div class="view" id="view-grab">
+      <div class="grab-hero">
+        <div class="show-name">秋日摇滚音乐节</div>
+        <div class="show-time">2026-10-25 19:30 · 深圳湾汇</div>
+        <div class="countdown-box">
+          <div class="label" id="cdLabel">距离开抢</div>
+          <div class="countdown-num">
+            <span id="cdH">00</span>:<span id="cdM">00</span>:<span id="cdS">05</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 抢号大按钮区 -->
+      <div style="padding:0 16px 30px">
+        <button class="btn-primary" id="grabBigBtn" style="height:54px;font-size:18px;margin-top:20px" onclick="onGrabClick()">
+          等待开抢
+        </button>
+        <p style="text-align:center;font-size:12px;color:#999;margin-top:12px">
+          📌 开抢后先到先得，号源有限，手慢无
+        </p>
+      </div>
+
+      <!-- 抢号中loading遮罩 -->
+      <div id="grabbingOverlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,.95);z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center">
+        <div style="width:50px;height:50px;border:4px solid #eee;border-top-color:#07c160;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:20px"></div>
+        <div style="font-size:16px;color:#333;font-weight:600">抢号中...</div>
+        <div style="font-size:13px;color:#999;margin-top:8px">正在为你分配排队号</div>
+      </div>
+      <style>@keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }</style>
+    </div>
+
+    <!-- ===== 视图：抢号成功 ===== -->
+    <div class="view" id="view-success">
+      <div class="success-view">
+        <div class="success-icon">✓</div>
+        <h2>抢号成功！</h2>
+        <p class="sub">演出当天请凭号入场</p>
+        <div class="queue-number-card">
+          <div class="label">你的排队号</div>
+          <div class="number">A088</div>
+          <div class="meta">
+            演出：秋日摇滚音乐节<br>
+            时间：2026-10-25 19:30<br>
+            地点：深圳·湾汇艺术中心
+          </div>
+        </div>
+        <button class="btn-primary" style="margin-top:24px" onclick="goMyQueue()">查看我的排队</button>
+      </div>
+    </div>
+
+    <!-- ===== 视图：我的排队（等待叫号） ===== -->
+    <div class="view" id="view-myqueue">
+      <div class="my-queue-hero">
+        <div class="show-name">秋日摇滚音乐节 · 进场叫号中</div>
+        <div class="progress-row">
+          <div class="cur"><small>当前叫到</small><br>A052</div>
+          <div class="you">
+            <div class="num">A088</div>
+            <div class="label">你的号码</div>
+          </div>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill"></div>
+        </div>
+        <div class="progress-stats">
+          <span>前面还有 36 位</span>
+          <span>预计 20 分钟后叫到你</span>
+        </div>
+      </div>
+
+      <div class="notice-banner">
+        💡 叫号接近时会收到微信通知，请留意消息提醒。叫到号后请在 15 分钟内到达场馆核验入场。
+      </div>
+
+      <div class="waiting-card">
+        <div class="queue-label">入场核验二维码</div>
+        <div class="queue-big">A088</div>
+        <div class="qr-placeholder"></div>
+        <div class="ticket-info">
+          👤 持票人：张**<br>
+          📍 请前往 1 号入口核验入场
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 视图：个人中心 ===== -->
+    <div class="view" id="view-profile">
+      <div class="profile-header">
+        <div class="avatar">👤</div>
+        <div>
+          <div class="name">微信用户</div>
+          <div class="id" id="verifyStatusText">未实名认证 · 抢号前需认证</div>
+        </div>
+      </div>
+      <div class="menu-card">
+        <div class="menu-item" onclick="goMyQueue()"><span class="icon">🎫</span>我的排队号<span class="arrow">›</span></div>
+        <div class="menu-item" onclick="toast('演示：抢号记录列表')"><span class="icon">📋</span>抢号记录<span class="arrow">›</span></div>
+      </div>
+      <div class="menu-card">
+        <div class="menu-item" onclick="handleVerifyEntry()"><span class="icon">🛡️</span>实名认证<span class="arrow" id="verifyArrow">未认证 ›</span></div>
+        <div class="menu-item" onclick="toast('演示：地址管理页')"><span class="icon">📍</span>观演地址<span class="arrow">›</span></div>
+        <div class="menu-item" onclick="toast('演示：消息通知设置')"><span class="icon">🔔</span>消息通知<span class="arrow">›</span></div>
+      </div>
+      <div class="menu-card">
+        <div class="menu-item" onclick="toast('演示：帮助中心')"><span class="icon">❓</span>帮助中心<span class="arrow">›</span></div>
+        <div class="menu-item" onclick="toast('演示：关于我们 v1.0.0')"><span class="icon">ℹ️</span>关于我们<span class="arrow">›</span></div>
+        <div class="menu-item" onclick="toast('演示：清除缓存完成')"><span class="icon">🗑️</span>清除缓存<span class="arrow">›</span></div>
+        <div class="menu-item" onclick="logout()"><span class="icon">🚪</span>退出登录<span class="arrow">›</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 底部 tab -->
+  <div class="tab-bar" id="tabBar">
+    <div class="tab-item active" data-view="home" onclick="switchTab('home')">
+      <div class="icon">🏠</div><span>首页</span>
+    </div>
+    <div class="tab-item" data-view="myqueue" onclick="switchTab('myqueue')">
+      <div class="icon">🎫</div><span>我的排队</span>
+    </div>
+    <div class="tab-item" data-view="profile" onclick="switchTab('profile')">
+      <div class="icon">👤</div><span>我的</span>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  const viewTitles = {
+    'login': '排队抢号',
+    'home': '排队抢号',
+    'detail': '演出详情',
+    'grab': '抢号',
+    'success': '抢号结果',
+    'myqueue': '我的排队',
+    'profile': '个人中心',
+    'verify': '实名认证'
+  };
+  const tabViews = ['home','myqueue','profile'];
+  let currentView = 'login';
+  let historyStack = ['login'];
+  let isVerified = false; // 是否已实名
+
+  function showView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.getElementById('navTitle').textContent = viewTitles[name] || '';
+    // 返回按钮
+    const showBack = !tabViews.includes(name) && name !== 'login';
+    document.getElementById('backBtn').style.display = showBack ? 'block' : 'none';
+    // tab栏显示控制
+    const tabBar = document.getElementById('tabBar');
+    if (['login','grab','success','detail'].includes(name)) {
+      tabBar.style.display = 'none';
+    } else {
+      tabBar.style.display = 'flex';
+    }
+    // tab高亮
+    if (tabViews.includes(name)) {
+      document.querySelectorAll('.tab-item').forEach(t => {
+        t.classList.toggle('active', t.dataset.view === name);
+      });
+    }
+    currentView = name;
+    document.getElementById('contentArea').scrollTop = 0;
+    refreshVerifyUI();
+  }
+
+  function navigate(name) {
+    historyStack.push(name);
+    showView(name);
+  }
+  function goBack() {
+    if (historyStack.length > 1) {
+      historyStack.pop();
+      showView(historyStack[historyStack.length - 1]);
+    }
+  }
+  function switchTab(name) {
+    historyStack = [name];
+    showView(name);
+  }
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 1800);
+  }
+
+  // 登录（仅微信授权，不强制实名）
+  function doLogin() {
+    if (!document.getElementById('agreeCheck').checked) return toast('请先同意用户协议');
+    toast('登录成功');
+    setTimeout(() => { historyStack = ['home']; showView('home'); }, 600);
+  }
+
+  // 实名认证提交
+  function doRealVerify() {
+    const name = document.getElementById('realName').value.trim();
+    const id = document.getElementById('idCard').value.trim();
+    if (!name) return toast('请输入真实姓名');
+    if (!id || id.length < 15) return toast('请输入正确的身份证号');
+    isVerified = true;
+    toast('实名认证成功');
+    // 返回上一页
+    setTimeout(() => {
+      historyStack.pop();
+      showView(historyStack[historyStack.length - 1]);
+    }, 800);
+  }
+
+  // 检查实名，未实名则跳转
+  function checkVerified() {
+    if (!isVerified) {
+      toast('请先完成实名认证');
+      navigate('verify');
+      return false;
+    }
+    return true;
+  }
+
+  // 个人中心-实名入口
+  function handleVerifyEntry() {
+    if (isVerified) {
+      toast('已完成实名认证');
+    } else {
+      navigate('verify');
+    }
+  }
+
+  // 刷新实名状态显示
+  function refreshVerifyUI() {
+    const statusText = document.getElementById('verifyStatusText');
+    const arrow = document.getElementById('verifyArrow');
+    if (statusText) {
+      statusText.textContent = isVerified ? '已实名认证 · 张**' : '未实名认证 · 抢号前需认证';
+    }
+    if (arrow) {
+      arrow.textContent = isVerified ? '已认证 ›' : '未认证 ›';
+    }
+  }
+
+  // 流程跳转
+  function goDetail() { navigate('detail'); }
+  function goGrab() {
+    if (!checkVerified()) return;
+    // 重置抢号页状态
+    canGrab = false;
+    navigate('grab');
+    startCountdown();
+  }
+  function goSuccess() { navigate('success'); }
+  function goMyQueue() { switchTab('myqueue'); }
+  function logout() {
+    isVerified = false;
+    historyStack = ['login'];
+    showView('login');
+  }
+
+  // 抢号按钮状态
+  let canGrab = false;
+  function updateGrabBtn() {
+    const btn = document.getElementById('grabBigBtn');
+    if (!canGrab) {
+      btn.textContent = '等待开抢';
+      btn.disabled = true;
+      btn.style.background = '#ccc';
+      btn.style.color = '#fff';
+      btn.style.animation = 'none';
+      return;
+    }
+    btn.textContent = '立即抢号';
+    btn.disabled = false;
+    btn.style.background = '#07c160';
+    btn.style.color = '#fff';
+    btn.style.animation = 'pulse 1.2s infinite';
+  }
+
+  // 点击抢号
+  function onGrabClick() {
+    if (!canGrab) return toast('还未到开抢时间');
+    const overlay = document.getElementById('grabbingOverlay');
+    overlay.style.display = 'flex';
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      goSuccess();
+    }, 1500);
+  }
+
+  // 倒计时
+  let cdTimer = null;
+  function startCountdown() {
+    if (cdTimer) clearInterval(cdTimer);
+    let total = 5; // 5秒后开抢，方便演示
+    document.getElementById('cdLabel').textContent = '距离开抢';
+    updateGrabBtn();
+    cdTimer = setInterval(() => {
+      const m = Math.floor(total / 60);
+      const s = total % 60;
+      document.getElementById('cdH').textContent = '00';
+      document.getElementById('cdM').textContent = String(m).padStart(2,'0');
+      document.getElementById('cdS').textContent = String(s).padStart(2,'0');
+      if (total <= 0) {
+        clearInterval(cdTimer);
+        canGrab = true;
+        document.getElementById('cdLabel').textContent = '🔥 开抢了！';
+        updateGrabBtn();
+      }
+      total--;
+    }, 1000);
+  }
+
+  showView('login');
+</script>
+</body>
+</html>
